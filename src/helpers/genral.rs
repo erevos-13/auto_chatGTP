@@ -1,11 +1,17 @@
-use std::fmt::format;
+use std::{fmt::format, fs};
 
 use actix_web::cookie::time::ext;
+use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserializer};
 
 use crate::{apis::call_request::call_gpt, models::general::llm::Message};
 
 use super::command_line::PrintCommand;
+const CODE_TEMPLATE_PATH: &str =
+    "/Users/orpheasboutsarides/Learn/Rust/web_template/src/code_template.rs";
+const EXEC_MAIN_PATH: &str = "/Users/orpheasboutsarides/Learn/Rust/web_template/src/main.rs";
+const API_SCHEMA_PATH: &str =
+    "/Users/orpheasboutsarides/Learn/Rust/auto_chatGTP/src/schemas/api_schema.json";
 
 pub fn extend_ai_function(ai_fun: fn(&str) -> &'static str, fun_input: &str) -> Message {
     let ai_fun_output = ai_fun(fun_input);
@@ -61,6 +67,28 @@ pub async fn ai_task_request_decoded<T: DeserializeOwned>(
         serde_json::from_str(llm_reponse.as_str()).expect("Failed to decode response from LLM");
     decoded_response
 }
+
+pub async fn check_status_code(client: &Client, url: &str) -> Result<u16, reqwest::Error> {
+    let res = client.get(url).send().await?;
+    Ok(res.status().as_u16())
+}
+
+pub fn read_code_template_contents() -> String {
+    let path = String::from(CODE_TEMPLATE_PATH);
+    fs::read_to_string(path).expect("Failed to read code template")
+}
+
+pub fn save_backend_code(contents: &str) {
+    let path = String::from(EXEC_MAIN_PATH);
+    fs::write(path, contents).expect("Failed to write code template");
+}
+
+pub fn save_api_endpoints(contents: &str) {
+    let path = String::from(API_SCHEMA_PATH);
+    fs::write(path, contents).expect("Failed to write API and points");
+}
+
+// /Users/orpheasboutsarides/Learn/Rust/web_template/src
 
 #[cfg(test)]
 mod tests {
